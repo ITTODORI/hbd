@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Birthday Particles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050505; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body class="flex items-center justify-center h-screen">
+
+    <div class="absolute z-10 text-center pointer-events-none select-none">
+        <h1 class="text-6xl md:text-8xl font-black text-white tracking-tighter mix-blend-difference">
+            HAPPY <br> <span class="text-yellow-400">BIRTHDAY</span>
+        </h1>
+        <p class="mt-4 text-gray-400 font-mono text-sm tracking-widest uppercase">
+            [ Digital ASCII Celebration ]
+        </p>
+    </div>
+
+    <canvas id="asciiCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('asciiCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        const chars = ["H", "B", "D", "!", "*", "+", "0", "1"];
+        const colors = ["#FACC15", "#E879F9", "#22D3EE", "#FB7185", "#FFFFFF"];
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 100;
+                this.size = Math.random() * 10 + 10;
+                this.speedY = Math.random() * -3 - 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.char = chars[Math.floor(Math.random() * chars.length)];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.opacity = Math.random() * 0.5 + 0.5;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = Math.random() * 0.05 - 0.025;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.rotation += this.rotationSpeed;
+
+                if (this.y < -20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.font = `${this.size}px monospace`;
+                ctx.fillText(this.char, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        function createParticles() {
+            const particleCount = Math.floor(window.innerWidth / 10);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            init();
+            particles = [];
+            createParticles();
+        });
+
+        init();
+        createParticles();
+        animate();
+    </script>
+</body>
+</html>
