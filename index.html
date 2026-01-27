@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASCII Birthday Particles</title>
+    <title>ASCII Birthday Ripple</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #050505; overflow: hidden; }
@@ -17,7 +17,7 @@
             HAPPY <br> <span class="text-yellow-400">BIRTHDAY</span>
         </h1>
         <p class="mt-4 text-gray-400 font-mono text-sm tracking-widest uppercase">
-            [ Digital ASCII Celebration ]
+            [ Move mouse to ripple ]
         </p>
     </div>
 
@@ -28,6 +28,7 @@
         const ctx = canvas.getContext('2d');
 
         let particles = [];
+        let mouse = { x: -1000, y: -1000 };
         const chars = ["H", "B", "D", "!", "*", "+", "0", "1"];
         const colors = ["#FACC15", "#E879F9", "#22D3EE", "#FB7185", "#FFFFFF"];
 
@@ -36,16 +37,36 @@
             canvas.height = window.innerHeight;
         }
 
-        class Particle {
-            constructor() {
-                this.reset();
-            }
+        // --- Ripple Grid Logic ---
+        const spacing = 40;
+        function drawGrid(time) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+            for (let x = 0; x < canvas.width; x += spacing) {
+                for (let y = 0; y < canvas.height; y += spacing) {
+                    const dx = mouse.x - x;
+                    const dy = mouse.y - y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Ripple math: sine wave based on distance and time
+                    const ripple = Math.sin(dist / 40 - time / 500);
+                    const size = Math.max(1, ripple * 3);
+                    const opacity = Math.max(0.05, ripple * 0.3);
 
+                    ctx.globalAlpha = opacity;
+                    ctx.fillRect(x, y, size, size);
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // --- Original Particle Logic ---
+        class Particle {
+            constructor() { this.reset(); }
             reset() {
                 this.x = Math.random() * canvas.width;
                 this.y = canvas.height + Math.random() * 100;
                 this.size = Math.random() * 10 + 10;
-                this.speedY = Math.random() * -3 - 1;
+                this.speedY = Math.random() * -2 - 1;
                 this.speedX = Math.random() * 2 - 1;
                 this.char = chars[Math.floor(Math.random() * chars.length)];
                 this.color = colors[Math.floor(Math.random() * colors.length)];
@@ -53,17 +74,12 @@
                 this.rotation = Math.random() * Math.PI * 2;
                 this.rotationSpeed = Math.random() * 0.05 - 0.025;
             }
-
             update() {
                 this.y += this.speedY;
                 this.x += this.speedX;
                 this.rotation += this.rotationSpeed;
-
-                if (this.y < -20) {
-                    this.reset();
-                }
+                if (this.y < -20) this.reset();
             }
-
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
@@ -77,30 +93,43 @@
         }
 
         function createParticles() {
-            const particleCount = Math.floor(window.innerWidth / 10);
+            particles = [];
+            const particleCount = Math.floor(window.innerWidth / 12);
             for (let i = 0; i < particleCount; i++) {
                 particles.push(new Particle());
             }
         }
 
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function animate(time) {
+            ctx.fillStyle = "#050505";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Ripple Grid First (Background)
+            drawGrid(time);
+
+            // 2. Draw Floating Particles (Foreground)
             particles.forEach(p => {
                 p.update();
                 p.draw();
             });
+
             requestAnimationFrame(animate);
         }
 
+        // Track mouse for ripple center
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
         window.addEventListener('resize', () => {
             init();
-            particles = [];
             createParticles();
         });
 
         init();
         createParticles();
-        animate();
+        animate(0);
     </script>
 </body>
 </html>
