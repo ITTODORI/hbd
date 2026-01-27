@@ -5,15 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASCII Birthday Ripple</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #050505; overflow: hidden; }
-        canvas { display: block; }
-    </style>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
-<body class="flex items-center justify-center h-screen">
+<body class="bg-[#050505] overflow-hidden text-white flex items-center justify-center h-screen">
 
-    <div class="absolute z-10 text-center pointer-events-none select-none">
-        <h1 class="text-6xl md:text-8xl font-black text-white tracking-tighter mix-blend-difference">
+    <canvas id="asciiCanvas" class="fixed top-0 left-0 z-1 blur-md transition-all duration-[1500ms] ease-in-out"></canvas>
+
+    <div id="password-gate" class="content-layer relative z-10 w-full max-w-sm bg-black/30 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20 text-center transition-all duration-500 ease-in-out">
+        <div class="bg-indigo-600/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ion-icon name="lock-closed" class="text-2xl text-indigo-400"></ion-icon>
+        </div>
+        
+        <h1 class="text-2xl font-bold mb-2">Private Message</h1>
+        <p class="text-sm text-white/80 mb-6">Please enter password to read messages.</p>
+
+        <div class="relative mb-4">
+            <input type="password" id="password-input" 
+                class="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 pr-12 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 transition-all placeholder:text-white/50 text-white"
+                placeholder="Password">
+            <button type="button" id="toggle-password" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white">
+                <ion-icon id="eye-icon" name="eye-outline" class="text-xl"></ion-icon>
+            </button>
+        </div>
+        
+        <button id="submit-password" class="w-full bg-indigo-600/80 hover:bg-indigo-600 py-3 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
+            Open
+        </button>
+
+        <div id="notification" class="mt-4 h-5 text-sm font-medium"></div>
+    </div>
+
+    <div id="birthday-content" class="content-layer hidden opacity-0 scale-90 relative z-10 text-center pointer-events-none select-none transition-all duration-[1200ms] ease-[cubic-bezier(0.175,0.885,0.32,1.275)]">
+        <h1 class="text-6xl md:text-8xl font-black text-white tracking-tighter mix-blend-difference uppercase">
             HAPPY BIRTHDAY<br> <span class="text-yellow-400">FULL NAME</span>
         </h1>
         <p class="mt-4 text-gray-400 font-mono text-sm tracking-widest uppercase">
@@ -21,23 +45,70 @@
         </p>
     </div>
 
-    <canvas id="asciiCanvas"></canvas>
-
     <script>
+        const gate = document.getElementById('password-gate');
+        const content = document.getElementById('birthday-content');
+        const passInput = document.getElementById('password-input');
+        const submitBtn = document.getElementById('submit-password');
+        const toggleBtn = document.getElementById('toggle-password');
+        const eyeIcon = document.getElementById('eye-icon');
+        const notif = document.getElementById('notification');
+        const canvasElement = document.getElementById('asciiCanvas');
+
+        const CORRECT_PASSWORD = "ultah"; 
+
+        toggleBtn.addEventListener('click', () => {
+            const type = passInput.type === 'password' ? 'text' : 'password';
+            passInput.type = type;
+            eyeIcon.name = type === 'password' ? 'eye-outline' : 'eye-off-outline';
+        });
+
+        submitBtn.addEventListener('click', checkPassword);
+        passInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') checkPassword(); });
+
+        function checkPassword() {
+            if (passInput.value === CORRECT_PASSWORD) {
+                // Efek keluar untuk gate
+                gate.classList.add('opacity-0', '-translate-y-5', 'pointer-events-none');
+                
+                setTimeout(() => {
+                    gate.style.display = 'none';
+                    
+                    // Hilangkan Blur pada Canvas via Tailwind
+                    canvasElement.classList.remove('blur-md');
+                    
+                    // Munculkan Teks
+                    content.classList.remove('hidden');
+                    
+                    // Trigger animasi masuk (opacity & scale)
+                    setTimeout(() => {
+                        content.classList.remove('opacity-0', 'scale-90');
+                        content.classList.add('opacity-100', 'scale-100');
+                    }, 50);
+                }, 500);
+
+            } else {
+                notif.innerText = "❌ Password Salah!";
+                notif.style.color = "#FB7185";
+                passInput.value = "";
+            }
+        }
+
+        // --- Canvas Animation Logic ---
         const canvas = document.getElementById('asciiCanvas');
         const ctx = canvas.getContext('2d');
-
         let particles = [];
         let mouse = { x: -1000, y: -1000 };
         const chars = ["H", "B", "D", "!", "*", "+", "0", "1"];
         const colors = ["#FACC15", "#E879F9", "#22D3EE", "#FB7185", "#FFFFFF"];
 
-        function init() {
+        function initCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            createParticles();
+            animate(0);
         }
 
-        // --- Ripple Grid Logic ---
         const spacing = 40;
         function drawGrid(time) {
             ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
@@ -46,12 +117,9 @@
                     const dx = mouse.x - x;
                     const dy = mouse.y - y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // Ripple math: sine wave based on distance and time
                     const ripple = Math.sin(dist / 40 - time / 500);
                     const size = Math.max(1, ripple * 3);
                     const opacity = Math.max(0.05, ripple * 0.3);
-
                     ctx.globalAlpha = opacity;
                     ctx.fillRect(x, y, size, size);
                 }
@@ -59,7 +127,6 @@
             ctx.globalAlpha = 1;
         }
 
-        // --- Original Particle Logic ---
         class Particle {
             constructor() { this.reset(); }
             reset() {
@@ -103,33 +170,26 @@
         function animate(time) {
             ctx.fillStyle = "#050505";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 1. Draw Ripple Grid First (Background)
             drawGrid(time);
-
-            // 2. Draw Floating Particles (Foreground)
             particles.forEach(p => {
                 p.update();
                 p.draw();
             });
-
             requestAnimationFrame(animate);
         }
 
-        // Track mouse for ripple center
         window.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
             mouse.y = e.clientY;
         });
 
         window.addEventListener('resize', () => {
-            init();
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
             createParticles();
         });
 
-        init();
-        createParticles();
-        animate(0);
+        initCanvas();
     </script>
 </body>
 </html>
