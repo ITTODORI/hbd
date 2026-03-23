@@ -38,7 +38,9 @@
         <button id="thr-btn" class="w-full bg-green-600/80 hover:bg-green-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
             THR
         </button>
-        
+        <button id="ikappim-btn" class="w-full bg-green-600/80 hover:bg-green-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
+            IKAPPIM
+        </button>
 
         <div id="notification" class="mt-4 h-5 text-sm"></div>
     </div>
@@ -84,9 +86,13 @@
         });
 
         document.getElementById('thr-btn').addEventListener('click', function() {
-    const gate = document.getElementById('password-gate');
-    const content = document.getElementById('birthday-content');
-    const audio = document.getElementById('thr-audio');
+            const gate = document.getElementById('password-gate');
+            const content = document.getElementById('birthday-content');
+            const audio = document.getElementById('thr-audio');
+
+        document.getElementById('ikappim-btn').addEventListener('click', function() {
+            window.location.href = 'miniGM.html';
+        });
 
     
     audio.currentTime = 4; // 1. Set start time
