@@ -19,16 +19,18 @@
         }
     </script>
     <style>
-        /* Efek Teks Emas Murni Tailwind tidak mendukung -webkit-background-clip secara native untuk semua browser */
         .gold-text {
             background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .animate-spin-slow {
+            animation: spin 3s linear infinite;
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-5 font-sans text-white bg-cover bg-center bg-no-repeat" 
-      style="background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('IMG_3001.jpg');">
+<body class="min-h-screen flex items-center justify-center p-5 font-sans text-white bg-slate-950 bg-cover bg-center bg-no-repeat" 
+      style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('IMG_3001.jpg');">
 
     <div class="w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.25rem] p-8 shadow-2xl transition-all duration-500">
         
@@ -39,14 +41,14 @@
             <p class="text-slate-400 text-xs tracking-[0.3em] uppercase">game pull Bedug Lebaran</p>
         </header>
 
-        <div class="relative bg-slate-900/50 rounded-2xl p-6 border border-indigo-500/20 shadow-inner mb-5">
-            <div id="slot-row" class="flex justify-center items-center gap-4 text-5xl h-10 transition-all">
-                <span class="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">🎰</span>
-                <span class="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">🎰</span>
-                <span class="drop-shadow-[0_0_10_rgba(255,255,255,0.3)]">🎰</span>
+        <div class="relative bg-slate-900/50 rounded-2xl p-6 border border-indigo-500/20 shadow-inner mb-5 text-center">
+            <div id="slot-row" class="flex justify-center items-center gap-4 text-5xl h-12 transition-all">
+                <span>🎰</span>
+                <span>🎰</span>
+                <span>🎰</span>
             </div>
             
-            <div id="jackpot-msg" class="text-center mt-4 text-indigo-300 text-sm font-medium tracking-wide min-h-[1.25rem]">
+            <div id="jackpot-msg" class="mt-4 text-indigo-300 text-sm font-medium tracking-wide min-h-[1.25rem]">
                 Coba keberuntunganmu!
             </div>
         </div>
@@ -57,8 +59,8 @@
                 <span class="text-xs text-white font-bold">15% Random</span>
             </div>
             <div class="flex flex-col text-right">
-                <span class="text-[10px] text-slate-500 uppercase tracking-widest">Sisa Kuota</span>
-                <span class="text-xs text-white font-bold"><span id="quota-count">10</span>/10</span>
+                <span id="stat-label" class="text-[10px] text-slate-500 uppercase tracking-widest">Sisa Kuota</span>
+                <span id="stat-value" class="text-xs text-white font-bold"><span id="quota-count">10</span>/10</span>
             </div>
         </div>
 
@@ -81,8 +83,10 @@
         const quotaCount = document.getElementById('quota-count');
         const slotRow = document.getElementById('slot-row');
         const jackpotMsg = document.getElementById('jackpot-msg');
+        const statLabel = document.getElementById('stat-label');
 
         let jackpotQuota = 10;
+        const totalInitial = 10;
         let isSpinning = false;
         const symbols = ['💰', '💎', '🎁', '🔔', '7️⃣', '🧧'];
 
@@ -96,13 +100,12 @@
             jackpotQuota--;
             quotaCount.innerText = jackpotQuota;
 
-            // Reset UI
             spinBtn.disabled = true;
             jackpotMsg.innerText = "Memutar keberuntungan...";
             jackpotMsg.classList.remove('text-green-400', 'text-red-400');
             
             let counter = 0;
-            const duration = 25; // jumlah putaran visual
+            const duration = 20; 
 
             const spinEffect = setInterval(() => {
                 const s1 = symbols[Math.floor(Math.random() * symbols.length)];
@@ -120,38 +123,40 @@
                     clearInterval(spinEffect);
                     checkWinner();
                 }
-            }, 70);
+            }, 80);
         }
 
         function checkWinner() {
             isSpinning = false;
-            // Logika probabilitas 15%
             const isWin = Math.random() < 0.15;
 
             if (isWin) {
-                // Tampilan MENANG
+                const winOrder = totalInitial - jackpotQuota;
+                quotaCount.innerText = winOrder;
                 jackpotQuota = 0;
-                quotaCount.innerText = "0";
+                
+                // Winning Visuals
                 slotRow.innerHTML = `<span>🧧</span><span>🧧</span><span>🧧</span>`;
-                
                 jackpotMsg.innerText = "JACKPOT! KAMU DAPAT THR!";
-                jackpotMsg.classList.add('text-green-400', 'animate-pulse', 'font-bold');
+                jackpotMsg.classList.add('text-green-400', 'animate-pulse', 'font-bold', 'text-lg');
                 
+                // Update Button Text
                 btnText.innerText = "AMBIL HADIAH";
-                // Ubah warna tombol jadi hijau
-                spinBtn.classList.remove('from-orange-500', 'to-red-600');
-                spinBtn.classList.add('from-emerald-500', 'to-green-600');
+                
+                // UPDATE SHADOW: Remove orange and add Green Glow
+                spinBtn.classList.remove('from-orange-500', 'to-red-600', 'shadow-[0_0_20px_rgba(234,88,12,0.3)]');
+                spinBtn.classList.add('from-emerald-500', 'to-green-600', 'shadow-[0_0_30px_rgba(16,185,129,0.6)]');
                 
                 spinBtn.disabled = false;
                 spinBtn.onclick = () => window.open('https://app.gopay.co.id/NF8p/d6bibzzx', '_blank');
+                
             } else {
-                // Tampilan KALAH
                 if (jackpotQuota === 0) {
                     jackpotMsg.innerText = "Yah, kuota habis! Coba lagi nanti.";
                     jackpotMsg.classList.add('text-red-400');
                     btnText.innerText = "GAME OVER";
                     spinBtn.disabled = true;
-                    slotRow.classList.add('grayscale');
+                    slotRow.classList.add('grayscale', 'opacity-50');
                 } else {
                     jackpotMsg.innerText = "Belum beruntung, ayo coba lagi!";
                     spinBtn.disabled = false;
