@@ -24,8 +24,12 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .animate-spin-slow {
-            animation: spin 3s linear infinite;
+        @keyframes pulse-gold {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        .win-animate {
+            animation: pulse-gold 2s infinite;
         }
     </style>
 </head>
@@ -41,8 +45,8 @@
             <p class="text-slate-400 text-xs tracking-[0.3em] uppercase">game pull Bedug Lebaran</p>
         </header>
 
-        <div class="relative bg-slate-900/50 rounded-2xl p-6 border border-indigo-500/20 shadow-inner mb-5 text-center">
-            <div id="slot-row" class="flex justify-center items-center gap-4 text-5xl h-12 transition-all">
+        <div id="jackpot-container" class="relative bg-slate-900/50 rounded-2xl p-6 border border-indigo-500/20 shadow-inner mb-5 text-center transition-all duration-700">
+            <div id="slot-row" class="flex justify-center items-center gap-4 text-5xl h-12 transition-all duration-500">
                 <span>🎰</span>
                 <span>🎰</span>
                 <span>🎰</span>
@@ -83,7 +87,7 @@
         const quotaCount = document.getElementById('quota-count');
         const slotRow = document.getElementById('slot-row');
         const jackpotMsg = document.getElementById('jackpot-msg');
-        const statLabel = document.getElementById('stat-label');
+        const jackpotContainer = document.getElementById('jackpot-container');
 
         let jackpotQuota = 10;
         const totalInitial = 10;
@@ -100,9 +104,10 @@
             jackpotQuota--;
             quotaCount.innerText = jackpotQuota;
 
+            // Lock UI
             spinBtn.disabled = true;
             jackpotMsg.innerText = "Memutar keberuntungan...";
-            jackpotMsg.classList.remove('text-green-400', 'text-red-400');
+            jackpotMsg.classList.remove('text-green-400', 'text-red-400', 'animate-pulse');
             
             let counter = 0;
             const duration = 20; 
@@ -128,25 +133,36 @@
 
         function checkWinner() {
             isSpinning = false;
+            // Logika probabilitas 15%
             const isWin = Math.random() < 0.15;
 
             if (isWin) {
                 const winOrder = totalInitial - jackpotQuota;
                 quotaCount.innerText = winOrder;
-                jackpotQuota = 0;
+                jackpotQuota = 0; // Kunci permainan
                 
-                // Winning Visuals
-                slotRow.innerHTML = `<span>🧧</span><span>🧧</span><span>🧧</span>`;
-                jackpotMsg.innerText = "JACKPOT! KAMU DAPAT THR!";
+                // 1. Ubah visual slot menjadi QR Code thr.png
+                slotRow.classList.remove('h-12');
+                slotRow.classList.add('h-auto', 'py-2');
+                slotRow.innerHTML = `
+                    <div class="bg-white p-3 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.3)] inline-block win-animate">
+                        <img src="thr.png" alt="QR CODE THR" class="w-32 h-32 object-contain mx-auto">
+                    </div>
+                `;
+                
+                // 2. Update Pesan
+                jackpotMsg.innerHTML = "MABRUK! SCAN QR UNTUK THR";
                 jackpotMsg.classList.add('text-green-400', 'animate-pulse', 'font-bold', 'text-lg');
                 
-                // Update Button Text
+                // 3. Tambah efek border emas pada container
+                jackpotContainer.classList.replace('border-indigo-500/20', 'border-yellow-500');
+                
+                // 4. Perubahan Tombol
                 btnText.innerText = "AMBIL HADIAH";
+                spinBtn.classList.remove('from-orange-500', 'to-red-600');
+                spinBtn.classList.add('from-emerald-500', 'to-green-600');
                 
-                // UPDATE SHADOW: Remove orange and add Green Glow
-                spinBtn.classList.remove('from-orange-500', 'to-red-600', 'shadow-[0_0_20px_rgba(234,88,12,0.3)]');
-                spinBtn.classList.add('from-emerald-500', 'to-green-600', 'shadow-[0_0_30px_rgba(16,185,129,0.6)]');
-                
+                // Redirect logic
                 spinBtn.disabled = false;
                 spinBtn.onclick = () => window.open('https://app.gopay.co.id/NF8p/d6bibzzx', '_blank');
                 
