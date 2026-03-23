@@ -1,186 +1,163 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jackpot THR - Edisi Keberuntungan Acak</title>
+    <title>THR Jackpot - Eid Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-        .slot-box {
-            background: linear-gradient(180deg, #059669 0%, #10b981 100%);
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .symbol-card {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            height: 100px;
-            background: white;
-            border-radius: 12px;
-            margin: 5px;
-            transition: transform 0.1s;
-        }
-        .spinning {
-            animation: blur 0.1s infinite linear;
-        }
-        @keyframes blur {
-            0% { filter: blur(0px); transform: translateY(-8px); }
-            50% { filter: blur(4px); }
-            100% { filter: blur(0px); transform: translateY(8px); }
-        }
-        .win-animate {
-            animation: bounce 0.5s infinite;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        /* Efek Teks Emas Murni Tailwind tidak mendukung -webkit-background-clip secara native untuk semua browser */
+        .gold-text {
+            background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
-<body class="bg-emerald-50 text-emerald-900 min-h-screen flex items-center justify-center font-sans p-4">
+<body class="min-h-screen flex items-center justify-center p-5 font-sans text-white bg-cover bg-center bg-no-repeat" 
+      style="background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('IMG_3001.jpg');">
 
-<div id="game-container" class="flex flex-col items-center w-full max-w-sm p-6 bg-white rounded-3xl shadow-2xl border-4 border-emerald-600 relative overflow-hidden">
-    
-    <div class="w-full flex justify-between items-center mb-4 bg-emerald-100 px-4 py-2 rounded-full border border-emerald-200">
-        <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">Sisa Kuota:</span>
-        <span id="chance-count" class="text-lg font-black text-emerald-800">10</span>
-    </div>
-
-    <div class="text-center mb-6">
-        <h1 class="text-3xl font-black italic text-emerald-800 uppercase leading-none">Jackpot THR</h1>
-        <p class="text-[10px] mt-1 text-emerald-600 font-bold tracking-tighter uppercase">Siapa Cepat Dia Dapat!</p>
-    </div>
-
-    <div class="slot-box p-4 rounded-2xl flex justify-between w-full mb-6 border-b-4 border-emerald-800">
-        <div id="slot1" class="symbol-card w-1/3 shadow-lg border-b-4 border-gray-200">🧧</div>
-        <div id="slot2" class="symbol-card w-1/3 shadow-lg border-b-4 border-gray-200">🕌</div>
-        <div id="slot3" class="symbol-card w-1/3 shadow-lg border-b-4 border-gray-200">✨</div>
-    </div>
-
-    <div id="action-area" class="w-full text-center">
-        <p id="status-msg" class="mb-4 font-bold text-emerald-700 text-sm h-5">Klik SPIN untuk mulai!</p>
-        <button id="spin-btn" onclick="spin()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_rgb(194,120,3)] transform transition active:translate-y-1 active:shadow-none text-xl tracking-widest">
-            SPIN!
-        </button>
-    </div>
-
-    <div id="qr-result" class="hidden mt-6 text-center animate-in fade-in zoom-in duration-500 bg-yellow-400 p-1 rounded-2xl">
-        <div class="bg-white p-4 rounded-xl shadow-inner">
-            <h2 id="win-title" class="font-black text-emerald-800 mb-2 text-xl win-animate">JACKPOT! 🎊</h2>
-            <img id="qr-img" src="" alt="QR THR" class="mx-auto rounded-lg border-4 border-emerald-100 w-32 h-32 mb-2">
-            <p id="win-desc" class="text-[10px] font-bold text-emerald-700 uppercase">Scan secepatnya sebelum hangus!</p>
-        </div>
-        <button onclick="location.reload()" class="my-3 text-white font-black text-xs uppercase hover:underline">Main Lagi?</button>
-    </div>
-
-    <p class="text-[9px] mt-6 opacity-40 uppercase font-bold italic">Sistem Keberuntungan Real-Time v2.0</p>
-</div>
-
-<script>
-    const symbols = ["🧧", "🕌", "💰", "🌙", "✨", "🍬", "🍭", "💎"];
-    const winSymbol = "🫔"; // Simbol pemenang (Ketupat/Makanan)
-    
-    let chances = 10;
-    let isSpinning = false;
-
-    // LOGIKA KRUSIAL: Tentukan angka keberuntungan (antara 1 sampai 10)
-    // Misalnya dapet angka 7, berarti user menang pas sisa kuota jadi 7 (spin ke-3)
-    const luckyNumber = Math.floor(Math.random() * 10) + 1;
-    console.log("Cheat Sheet: Kamu akan menang di sisa kuota: " + luckyNumber);
-
-    function spin() {
-        if (isSpinning || chances <= 0) return;
+    <div class="w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.25rem] p-8 shadow-2xl transition-all duration-500">
         
-        isSpinning = true;
-        const currentTurn = chances; // Cek sisa kuota sebelum dikurangi
-        chances--;
-        
-        // Update UI sisa kuota
-        document.getElementById('chance-count').innerText = chances;
-        
-        const btn = document.getElementById('spin-btn');
-        const status = document.getElementById('status-msg');
-        const slots = [document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
-        
-        // Efek Button
-        btn.disabled = true;
-        btn.classList.add('grayscale', 'cursor-not-allowed');
-        status.innerText = "Memutar keberuntungan...";
+        <header class="text-center mb-4">
+            <h1 class="font-cinzel text-4xl font-bold gold-text tracking-wider">
+                BEDUG MASTER
+            </h1>
+            <p class="text-slate-400 text-xs tracking-[0.3em] uppercase">game pull Bedug Lebaran</p>
+        </header>
 
-        // Mulai Animasi
-        slots.forEach(slot => {
-            slot.classList.add('spinning');
-            slot.innerText = "❓";
-        });
-
-        // Berhenti setelah 1.2 detik
-        setTimeout(() => {
-            stopSpin(slots, currentTurn);
-        }, 1200);
-    }
-
-    function stopSpin(slots, turn) {
-        // Cek apakah putaran ini adalah putaran keberuntungan
-        const isWin = (turn === luckyNumber);
-        
-        const currentResults = [];
-
-        slots.forEach((slot, index) => {
-            setTimeout(() => {
-                slot.classList.remove('spinning');
-                
-                let res;
-                if (isWin) {
-                    res = winSymbol; // Paksa menang jika angka cocok
-                } else {
-                    // Berikan simbol acak
-                    res = symbols[Math.floor(Math.random() * symbols.length)];
-                }
-                
-                slot.innerText = res;
-                currentResults.push(res);
-
-                // Jika sudah slot terakhir berhenti
-                if (index === 2) {
-                    checkFinalResult(isWin);
-                }
-            }, index * 200); // Efek berhenti satu-per-satu (staggered)
-        });
-    }
-
-    function checkFinalResult(isWin) {
-        const status = document.getElementById('status-msg');
-        const btn = document.getElementById('spin-btn');
-
-        if (isWin) {
-            status.innerText = "SELAMAT! KAMU MENANG!";
-            btn.classList.add('hidden');
-            showWin("THR CAIR! 💸");
-        } else {
-            isSpinning = false;
-            btn.disabled = false;
-            btn.classList.remove('grayscale', 'cursor-not-allowed');
-            status.innerText = "Yah, coba lagi ya!";
+        <div class="relative bg-slate-900/50 rounded-2xl p-6 border border-indigo-500/20 shadow-inner mb-5">
+            <div id="slot-row" class="flex justify-center items-center gap-4 text-5xl h-10 transition-all">
+                <span class="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">🎰</span>
+                <span class="drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">🎰</span>
+                <span class="drop-shadow-[0_0_10_rgba(255,255,255,0.3)]">🎰</span>
+            </div>
             
-            // Jika kuota habis dan belum menang (safety net)
-            if (chances <= 0) {
-                status.innerText = "Kuota habis! Refresh untuk coba lagi.";
+            <div id="jackpot-msg" class="text-center mt-4 text-indigo-300 text-sm font-medium tracking-wide min-h-[1.25rem]">
+                Coba keberuntunganmu!
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-6 px-2">
+            <div class="flex flex-col">
+                <span class="text-[10px] text-slate-500 uppercase tracking-widest">Peluang</span>
+                <span class="text-xs text-white font-bold">15% Random</span>
+            </div>
+            <div class="flex flex-col text-right">
+                <span class="text-[10px] text-slate-500 uppercase tracking-widest">Sisa Kuota</span>
+                <span class="text-xs text-white font-bold"><span id="quota-count">10</span>/10</span>
+            </div>
+        </div>
+
+        <button id="spin-btn" class="w-full relative group overflow-hidden bg-gradient-to-br from-orange-500 to-red-600 p-[1px] rounded-2xl transition-all active:scale-95 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+            <div class="bg-slate-900 group-hover:bg-transparent transition-colors py-4 rounded-[15px]">
+                <span id="btn-text" class="text-white font-bold tracking-widest text-lg">SPIN SEKARANG</span>
+            </div>
+        </button>
+
+        <footer class="mt-8 text-center">
+            <p class="text-[9px] text-slate-600 tracking-[0.5em] uppercase italic">
+                Powered by iMen Digital
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        const spinBtn = document.getElementById('spin-btn');
+        const btnText = document.getElementById('btn-text');
+        const quotaCount = document.getElementById('quota-count');
+        const slotRow = document.getElementById('slot-row');
+        const jackpotMsg = document.getElementById('jackpot-msg');
+
+        let jackpotQuota = 10;
+        let isSpinning = false;
+        const symbols = ['💰', '💎', '🎁', '🔔', '7️⃣', '🧧'];
+
+        spinBtn.addEventListener('click', () => {
+            if (jackpotQuota <= 0 || isSpinning) return;
+            startGame();
+        });
+
+        function startGame() {
+            isSpinning = true;
+            jackpotQuota--;
+            quotaCount.innerText = jackpotQuota;
+
+            // Reset UI
+            spinBtn.disabled = true;
+            jackpotMsg.innerText = "Memutar keberuntungan...";
+            jackpotMsg.classList.remove('text-green-400', 'text-red-400');
+            
+            let counter = 0;
+            const duration = 25; // jumlah putaran visual
+
+            const spinEffect = setInterval(() => {
+                const s1 = symbols[Math.floor(Math.random() * symbols.length)];
+                const s2 = symbols[Math.floor(Math.random() * symbols.length)];
+                const s3 = symbols[Math.floor(Math.random() * symbols.length)];
+                
+                slotRow.innerHTML = `
+                    <span class="animate-bounce">${s1}</span>
+                    <span class="animate-bounce" style="animation-delay: 0.1s">${s2}</span>
+                    <span class="animate-bounce" style="animation-delay: 0.2s">${s3}</span>
+                `;
+                counter++;
+
+                if (counter >= duration) {
+                    clearInterval(spinEffect);
+                    checkWinner();
+                }
+            }, 70);
+        }
+
+        function checkWinner() {
+            isSpinning = false;
+            // Logika probabilitas 15%
+            const isWin = Math.random() < 0.15;
+
+            if (isWin) {
+                // Tampilan MENANG
+                jackpotQuota = 0;
+                quotaCount.innerText = "0";
+                slotRow.innerHTML = `<span>🧧</span><span>🧧</span><span>🧧</span>`;
+                
+                jackpotMsg.innerText = "JACKPOT! KAMU DAPAT THR!";
+                jackpotMsg.classList.add('text-green-400', 'animate-pulse', 'font-bold');
+                
+                btnText.innerText = "AMBIL HADIAH";
+                // Ubah warna tombol jadi hijau
+                spinBtn.classList.remove('from-orange-500', 'to-red-600');
+                spinBtn.classList.add('from-emerald-500', 'to-green-600');
+                
+                spinBtn.disabled = false;
+                spinBtn.onclick = () => window.open('https://app.gopay.co.id/NF8p/d6bibzzx', '_blank');
+            } else {
+                // Tampilan KALAH
+                if (jackpotQuota === 0) {
+                    jackpotMsg.innerText = "Yah, kuota habis! Coba lagi nanti.";
+                    jackpotMsg.classList.add('text-red-400');
+                    btnText.innerText = "GAME OVER";
+                    spinBtn.disabled = true;
+                    slotRow.classList.add('grayscale');
+                } else {
+                    jackpotMsg.innerText = "Belum beruntung, ayo coba lagi!";
+                    spinBtn.disabled = false;
+                }
             }
         }
-    }
-
-    function showWin(titleText) {
-        document.getElementById('win-title').innerText = titleText;
-        const qrImg = document.getElementById('qr-img');
-        // Link QR dummy - bisa diganti link DANA/GOPAY kaget sesungguhnya
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://github.com/gemini-ai`;
-        document.getElementById('qr-result').classList.remove('hidden');
-        
-        // Hapus area tombol agar fokus ke hadiah
-        document.getElementById('action-area').classList.add('hidden');
-    }
-</script>
-
+    </script>
 </body>
 </html>
