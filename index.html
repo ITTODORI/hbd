@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>iMen Landing Page</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <style>
@@ -21,10 +21,10 @@
     </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center p-5 font-sans text-white bg-cover bg-center bg-no-repeat" 
+<body class="min-h-screen flex items-center justify-center p-5 font-sans-main text-white bg-cover bg-center bg-no-repeat" 
       style="background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('IMG_3001.jpg');">
 
-    <div id="password-gate" class="w-full max-w-sm bg-black/30 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20 text-center">
+    <div id="password-gate" class="w-full max-w-sm bg-black/30 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20 text-center transition-all duration-500">
         <div class="bg-indigo-600/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
             <ion-icon name="lock-closed" class="text-2xl text-indigo-400"></ion-icon>
         </div>
@@ -32,20 +32,22 @@
         <h1 class="text-2xl font-bold mb-2">iMen</h1>
         <p class="text-sm text-white/80 mb-6">Welcome to my Landing Page.</p>
 
-        <button id="submit-password"  class="w-full bg-indigo-600/80 hover:bg-indigo-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
-            <a href="https://kiosgamer.co.id/" target="_blank" class="text-white hover:text-indigo-300">Top-up Games</a>
-        </button>
+        <a href="https://kiosgamer.co.id/" target="_blank" class="block w-full bg-indigo-600/80 hover:bg-indigo-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95 text-center">
+            Top-up Games
+        </a>
+
         <button id="thr-btn" class="w-full bg-green-600/80 hover:bg-green-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
             THR
         </button>
-        <button id="ikappim-btn" class="w-full bg-green-600/80 hover:bg-green-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
+
+        <button id="ikappim-btn" class="w-full bg-orange-600/80 hover:bg-orange-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
             IKAPPIM
         </button>
 
         <div id="notification" class="mt-4 h-5 text-sm"></div>
     </div>
 
-    <div id="birthday-content" class="content-layer hidden opacity-0 scale-95 relative z-10 text-center pointer-events-none select-none transition-all duration-[1500ms] ease-out">
+    <div id="birthday-content" class="hidden opacity-0 scale-95 relative z-10 text-center pointer-events-none select-none transition-all duration-[1500ms] ease-out">
         <div class="bg-black/10 backdrop-blur-[2px] p-10 rounded-3xl shadow-2xl border border-white/20">
             <h1 class="font-eid text-6xl md:text-8xl font-bold gold-gradient tracking-tight leading-none drop-shadow-2xl">
                 IED <br> FITR
@@ -53,12 +55,12 @@
             
             <div class="h-px w-24 bg-gradient-to-r from-transparent via-yellow-500 to-transparent mx-auto my-6 opacity-50"></div>
 
-            <h2 class="text-lg md:text-5xl font-light tracking-[0.2em] text-white/90  mb-2">
-                THR Scane here
+            <h2 class="text-lg md:text-5xl font-light tracking-[0.2em] text-white/90 mb-2">
+                THR Scan here
             </h2>
 
             <a href="https://app.gopay.co.id/NF8p/d6bibzzx" target="_blank" class="block transition-transform hover:scale-105 active:scale-95">
-                <img src="thr.png" alt="Scan for THR" class="mb-10 mx-auto rounded-2xl shadow-lg">
+                <img src="thr.png" alt="Scan for THR" class="mb-10 mx-auto rounded-2xl shadow-lg max-w-[200px]">
             </a>
 
             <p class="text-emerald-400 font-medium text-lg md:text-2xl tracking-[0.4em] drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]">
@@ -74,48 +76,44 @@
     <audio id="thr-audio" src="Ketipak Ketipung Raya.mp3" preload="auto"></audio>
 
     <script>
-        document.getElementById('thr-btn').addEventListener('click', function() {
-            const gate = document.getElementById('password-gate');
-            const content = document.getElementById('birthday-content');
-            
+        // DOM Elements
+        const gate = document.getElementById('password-gate');
+        const content = document.getElementById('birthday-content');
+        const audio = document.getElementById('thr-audio');
+        const thrBtn = document.getElementById('thr-btn');
+        const ikappimBtn = document.getElementById('ikappim-btn');
+
+        // Logic for THR Button
+        thrBtn.addEventListener('click', function() {
+            // Hide Gate
             gate.style.display = 'none';
+            
+            // Show Content with Animation
             content.classList.remove('hidden');
             setTimeout(() => {
-                content.classList.remove('opacity-0', 'scale-95');
+                content.classList.remove('opacity-0', 'scale-95', 'pointer-events-none', 'select-none');
             }, 50);
+
+            // Play Audio
+            audio.currentTime = 4; 
+            audio.play().catch(error => {
+                console.log("Auto-play blocked or file not found:", error);
+            });
         });
 
-        document.getElementById('thr-btn').addEventListener('click', function() {
-            const gate = document.getElementById('password-gate');
-            const content = document.getElementById('birthday-content');
-            const audio = document.getElementById('thr-audio');
+        // Audio Loop Logic (4s to 45s)
+        audio.addEventListener('timeupdate', function() {
+            if (this.currentTime >= 45) {
+                this.currentTime = 4;
+                this.play();
+            }
+        });
 
-        document.getElementById('ikappim-btn').addEventListener('click', function() {
+        // Logic for IKAPPIM Button
+        ikappimBtn.addEventListener('click', function() {
+            // Pastikan file ini ada di folder yang sama di GitHub
             window.location.href = 'miniGM.html';
         });
-
-    
-    audio.currentTime = 4; // 1. Set start time
-    
-    audio.play().catch(error => console.log("Playback error:", error));
-
-    // 2. Loop Logic
-    audio.addEventListener('timeupdate', function() {
-        // If current time exceeds 45 seconds, reset to 3 seconds
-        if (this.currentTime >= 45) {
-            this.currentTime = 4;
-            this.play();
-        }
-    });
-
-    // UI Transitions
-    gate.style.display = 'none';
-    content.classList.remove('hidden');
-    setTimeout(() => {
-        content.classList.remove('opacity-0', 'scale-95');
-        content.classList.remove('pointer-events-none', 'select-none'); 
-    }, 50);
-});
     </script>
 </body>
 </html>
