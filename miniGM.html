@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jackpot THR - Edisi Keberuntungan Acak</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .slot-box {
+            background: linear-gradient(180deg, #059669 0%, #10b981 100%);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .symbol-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            height: 100px;
+            background: white;
+            border-radius: 12px;
+            margin: 5px;
+            transition: transform 0.1s;
+        }
+        .spinning {
+            animation: blur 0.1s infinite linear;
+        }
+        @keyframes blur {
+            0% { filter: blur(0px); transform: translateY(-8px); }
+            50% { filter: blur(4px); }
+            100% { filter: blur(0px); transform: translateY(8px); }
+        }
+        .win-animate {
+            animation: bounce 0.5s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-emerald-50 text-emerald-900 min-h-screen flex items-center justify-center font-sans p-4">
+
+<div id="game-container" class="flex flex-col items-center w-full max-w-sm p-6 bg-white rounded-3xl shadow-2xl border-4 border-emerald-600 relative overflow-hidden">
+    
+    <div class="w-full flex justify-between items-center mb-4 bg-emerald-100 px-4 py-2 rounded-full border border-emerald-200">
+        <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">Sisa Kuota:</span>
+        <span id="chance-count" class="text-lg font-black text-emerald-800">10</span>
+    </div>
+
+    <div class="text-center mb-6">
+        <h1 class="text-3xl font-black italic text-emerald-800 uppercase leading-none">Jackpot THR</h1>
+        <p class="text-[10px] mt-1 text-emerald-600 font-bold tracking-tighter uppercase">Siapa Cepat Dia Dapat!</p>
+    </div>
+
+    <div class="slot-box p-4 rounded-2xl flex justify-between w-full mb-6 border-b-4 border-emerald-800">
+        <div id="slot1" class="symbol-card w-1/3 shadow-lg border-b-4 border-gray-200">🧧</div>
+        <div id="slot2" class="symbol-card w-1/3 shadow-lg border-b-4 border-gray-200">🕌</div>
+        <div id="slot3" class="symbol-card w-1/3 shadow-lg border-b-4 border-gray-200">✨</div>
+    </div>
+
+    <div id="action-area" class="w-full text-center">
+        <p id="status-msg" class="mb-4 font-bold text-emerald-700 text-sm h-5">Klik SPIN untuk mulai!</p>
+        <button id="spin-btn" onclick="spin()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-[0_6px_0_rgb(194,120,3)] transform transition active:translate-y-1 active:shadow-none text-xl tracking-widest">
+            SPIN!
+        </button>
+    </div>
+
+    <div id="qr-result" class="hidden mt-6 text-center animate-in fade-in zoom-in duration-500 bg-yellow-400 p-1 rounded-2xl">
+        <div class="bg-white p-4 rounded-xl shadow-inner">
+            <h2 id="win-title" class="font-black text-emerald-800 mb-2 text-xl win-animate">JACKPOT! 🎊</h2>
+            <img id="qr-img" src="" alt="QR THR" class="mx-auto rounded-lg border-4 border-emerald-100 w-32 h-32 mb-2">
+            <p id="win-desc" class="text-[10px] font-bold text-emerald-700 uppercase">Scan secepatnya sebelum hangus!</p>
+        </div>
+        <button onclick="location.reload()" class="my-3 text-white font-black text-xs uppercase hover:underline">Main Lagi?</button>
+    </div>
+
+    <p class="text-[9px] mt-6 opacity-40 uppercase font-bold italic">Sistem Keberuntungan Real-Time v2.0</p>
+</div>
+
+<script>
+    const symbols = ["🧧", "🕌", "💰", "🌙", "✨", "🍬", "🍭", "💎"];
+    const winSymbol = "🫔"; // Simbol pemenang (Ketupat/Makanan)
+    
+    let chances = 10;
+    let isSpinning = false;
+
+    // LOGIKA KRUSIAL: Tentukan angka keberuntungan (antara 1 sampai 10)
+    // Misalnya dapet angka 7, berarti user menang pas sisa kuota jadi 7 (spin ke-3)
+    const luckyNumber = Math.floor(Math.random() * 10) + 1;
+    console.log("Cheat Sheet: Kamu akan menang di sisa kuota: " + luckyNumber);
+
+    function spin() {
+        if (isSpinning || chances <= 0) return;
+        
+        isSpinning = true;
+        const currentTurn = chances; // Cek sisa kuota sebelum dikurangi
+        chances--;
+        
+        // Update UI sisa kuota
+        document.getElementById('chance-count').innerText = chances;
+        
+        const btn = document.getElementById('spin-btn');
+        const status = document.getElementById('status-msg');
+        const slots = [document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
+        
+        // Efek Button
+        btn.disabled = true;
+        btn.classList.add('grayscale', 'cursor-not-allowed');
+        status.innerText = "Memutar keberuntungan...";
+
+        // Mulai Animasi
+        slots.forEach(slot => {
+            slot.classList.add('spinning');
+            slot.innerText = "❓";
+        });
+
+        // Berhenti setelah 1.2 detik
+        setTimeout(() => {
+            stopSpin(slots, currentTurn);
+        }, 1200);
+    }
+
+    function stopSpin(slots, turn) {
+        // Cek apakah putaran ini adalah putaran keberuntungan
+        const isWin = (turn === luckyNumber);
+        
+        const currentResults = [];
+
+        slots.forEach((slot, index) => {
+            setTimeout(() => {
+                slot.classList.remove('spinning');
+                
+                let res;
+                if (isWin) {
+                    res = winSymbol; // Paksa menang jika angka cocok
+                } else {
+                    // Berikan simbol acak
+                    res = symbols[Math.floor(Math.random() * symbols.length)];
+                }
+                
+                slot.innerText = res;
+                currentResults.push(res);
+
+                // Jika sudah slot terakhir berhenti
+                if (index === 2) {
+                    checkFinalResult(isWin);
+                }
+            }, index * 200); // Efek berhenti satu-per-satu (staggered)
+        });
+    }
+
+    function checkFinalResult(isWin) {
+        const status = document.getElementById('status-msg');
+        const btn = document.getElementById('spin-btn');
+
+        if (isWin) {
+            status.innerText = "SELAMAT! KAMU MENANG!";
+            btn.classList.add('hidden');
+            showWin("THR CAIR! 💸");
+        } else {
+            isSpinning = false;
+            btn.disabled = false;
+            btn.classList.remove('grayscale', 'cursor-not-allowed');
+            status.innerText = "Yah, coba lagi ya!";
+            
+            // Jika kuota habis dan belum menang (safety net)
+            if (chances <= 0) {
+                status.innerText = "Kuota habis! Refresh untuk coba lagi.";
+            }
+        }
+    }
+
+    function showWin(titleText) {
+        document.getElementById('win-title').innerText = titleText;
+        const qrImg = document.getElementById('qr-img');
+        // Link QR dummy - bisa diganti link DANA/GOPAY kaget sesungguhnya
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://github.com/gemini-ai`;
+        document.getElementById('qr-result').classList.remove('hidden');
+        
+        // Hapus area tombol agar fokus ke hadiah
+        document.getElementById('action-area').classList.add('hidden');
+    }
+</script>
+
+</body>
+</html>
