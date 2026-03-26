@@ -136,7 +136,7 @@ const CONFIG = {
             ctx.translate(s.x, s.y);
             ctx.rotate(s.angle);
 
-            // LOGIKA PANAH PENUNJUK KUNCI (KEY TRACKER)
+            // LOGIC (KEY TRACKER)
             if (keys.length > 0) {
                 let closestKey = keys[0];
                 let minDist = Math.hypot(keys[0].x - s.x, keys[0].y - s.y);
@@ -148,10 +148,10 @@ const CONFIG = {
                 const angleToKey = Math.atan2(closestKey.y - s.y, closestKey.x - s.x);
                 
                 ctx.save();
-                ctx.rotate(-s.angle); // Reset rotasi kapal agar panah bebas
+                ctx.rotate(-s.angle); // Reset ratio ship
                 ctx.rotate(angleToKey);
                 
-                // Gambar Panah Navigasi
+                // Arriw Navigation
                 ctx.translate(60, 0); 
                 ctx.fillStyle = '#22d3ee';
                 ctx.shadowBlur = 15;
