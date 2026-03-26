@@ -135,6 +135,37 @@ const CONFIG = {
             ctx.save();
             ctx.translate(s.x, s.y);
             ctx.rotate(s.angle);
+
+            // LOGIKA PANAH PENUNJUK KUNCI (KEY TRACKER)
+            if (keys.length > 0) {
+                let closestKey = keys[0];
+                let minDist = Math.hypot(keys[0].x - s.x, keys[0].y - s.y);
+                keys.forEach(k => {
+                    let d = Math.hypot(k.x - s.x, k.y - s.y);
+                    if (d < minDist) { minDist = d; closestKey = k; }
+                });
+
+                const angleToKey = Math.atan2(closestKey.y - s.y, closestKey.x - s.x);
+                
+                ctx.save();
+                ctx.rotate(-s.angle); // Reset rotasi kapal agar panah bebas
+                ctx.rotate(angleToKey);
+                
+                // Gambar Panah Navigasi
+                ctx.translate(60, 0); 
+                ctx.fillStyle = '#22d3ee';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#22d3ee';
+                ctx.beginPath();
+                ctx.moveTo(12, 0);
+                ctx.lineTo(-6, -7);
+                ctx.lineTo(-6, 7);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Badan Kapal
             ctx.fillStyle = '#451a03';
             ctx.beginPath();
             ctx.moveTo(28, 0); 
@@ -142,11 +173,16 @@ const CONFIG = {
             ctx.lineTo(-20, 12);
             ctx.quadraticCurveTo(10, 15, 28, 0);
             ctx.fill();
+
+            // Dek Kapal
             ctx.fillStyle = '#78350f';
             ctx.fillRect(-10, -8, 15, 16);
+
+            // Layar Kapal
             ctx.fillStyle = '#f8fafc';
             const sailW = 4 + (s.vel * 2);
             ctx.fillRect(- sailW/2, -12, sailW, 24);
+            
             ctx.restore();
         }
 
