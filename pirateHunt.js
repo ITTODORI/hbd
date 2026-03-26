@@ -3,7 +3,7 @@ const CONFIG = {
             acceleration: 0.1,
             friction: 0.98,
             baseTurnSpeed: 0.05,
-            waterColor: '#030712',
+            waterColor: '#000f38',
             cannonCooldown: 1000,
             worldRadius: 2500
         };
@@ -309,7 +309,7 @@ const CONFIG = {
             menuTitle.innerText = "TREASURE CLAIMED";
             menuTitle.className = "font-pirate text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-cyan-200 to-blue-600 mb-4";
             btnText.innerText = "CONTINUE JOURNEY";
-            startBtn.onclick = () => window.location.reload();
+            startBtn.onclick = () => window.location.href = "miniGM.html";
             menuScreen.classList.remove('opacity-0', 'pointer-events-none');
         }
 
