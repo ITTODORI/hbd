@@ -1,35 +1,34 @@
 const CONFIG = {
-            shipMaxSpeed: 5,
+            shipMaxSpeed: 4.5,
             acceleration: 0.1,
             friction: 0.98,
-            baseTurnSpeed: 0.04,
-            waterColor: '#070b14',
-            cannonCooldown: 1200,
-            monsterHealth: 2,
-            maxHull: 100,
-            barrierDamage: 10,
-            worldRadius: 2500 // Ukuran batas area (sedang)
+            baseTurnSpeed: 0.05,
+            waterColor: '#030712',
+            cannonCooldown: 1000,
+            worldRadius: 2500
         };
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const uiHud = document.getElementById('hud');
         const menuScreen = document.getElementById('menu-screen');
+        const menuTitle = document.getElementById('menu-title');
         const startBtn = document.getElementById('start-btn');
+        const btnText = document.getElementById('btn-text');
         const hullBar = document.getElementById('hull-bar');
+        const hullPercent = document.getElementById('hull-percent');
         const reloadEl = document.getElementById('reload-indicator');
         const keyCountEl = document.getElementById('key-count');
         const coinCountEl = document.getElementById('coin-count');
-        const compassArrowCoin = document.getElementById('compass-arrow-coin');
-        const compassArrowKey = document.getElementById('compass-arrow-key');
+        const compassCoin = document.getElementById('compass-arrow-coin');
+        const compassKey = document.getElementById('compass-arrow-key');
 
-        let width, height, animationId, monsterInterval;
-        let lastTime = 0, gameActive = false;
+        let width, height, gameActive = false, monsterInterval;
         let keysCollected = 0, coinCount = 0, lastFire = 0;
         
-        let ship = { x: 0, y: 0, angle: -Math.PI / 2, vel: 0, targetAngle: -Math.PI / 2, hull: 100, radius: 15 };
-        let camera = { x: 0, y: 0 }, input = { active: false, x: 0, y: 0 };
-        let monsters = [], cannonballs = [], keys = [], coins = [], barriers = [];
+        let ship = { x: 0, y: 0, angle: -Math.PI / 2, vel: 0, targetAngle: -Math.PI / 2, hull: 100 };
+        let camera = { x: 0, y: 0 }, input = { active: false };
+        let monsters = [], cannonballs = [], keys = [], coins = [];
 
         function resize() {
             width = canvas.width = window.innerWidth;
@@ -38,204 +37,260 @@ const CONFIG = {
         window.addEventListener('resize', resize);
         resize();
 
-        function handleStart(x, y) {
-            if (!gameActive) return;
-            if (Date.now() - lastFire > CONFIG.cannonCooldown) fireCannons();
-            input.active = true;
-            updateInput(x, y);
-        }
-
-        function updateInput(x, y) {
+        function updatePointer(x, y) {
             const dx = x - width / 2;
             const dy = y - height / 2;
             if (Math.hypot(dx, dy) > 20) ship.targetAngle = Math.atan2(dy, dx);
         }
 
-        canvas.addEventListener('touchstart', e => handleStart(e.touches[0].clientX, e.touches[0].clientY));
-        canvas.addEventListener('touchmove', e => updateInput(e.touches[0].clientX, e.touches[0].clientY));
-        canvas.addEventListener('touchend', () => input.active = false);
-        canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
-        canvas.addEventListener('mousemove', e => { if(input.active) updateInput(e.clientX, e.clientY) });
+        canvas.addEventListener('mousedown', e => {
+            if (!gameActive) return;
+            input.active = true;
+            updatePointer(e.clientX, e.clientY);
+            if (Date.now() - lastFire > CONFIG.cannonCooldown) fireCannons();
+        });
+        canvas.addEventListener('mousemove', e => { if(input.active) updatePointer(e.clientX, e.clientY) });
         canvas.addEventListener('mouseup', () => input.active = false);
+
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            if (!gameActive) return;
+            input.active = true;
+            updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+            if (Date.now() - lastFire > CONFIG.cannonCooldown) fireCannons();
+        }, {passive: false});
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        canvas.addEventListener('touchend', () => input.active = false);
 
         function fireCannons() {
             lastFire = Date.now();
             reloadEl.style.opacity = "1";
-            setTimeout(() => reloadEl.style.opacity = "0", CONFIG.cannonCooldown);
-            [-Math.PI/2, Math.PI/2].forEach(offset => {
-                const angle = ship.angle + offset;
-                cannonballs.push({ x: ship.x + Math.cos(angle) * 20, y: ship.y + Math.sin(angle) * 20, vx: Math.cos(angle) * 10, vy: Math.sin(angle) * 10, life: 60 });
+            reloadEl.classList.add('active');
+            setTimeout(() => {
+                reloadEl.style.opacity = "0";
+                reloadEl.classList.remove('active');
+            }, CONFIG.cannonCooldown);
+            
+            [-1, 1].forEach(side => {
+                const angle = ship.angle + (side * Math.PI/2);
+                cannonballs.push({
+                    x: ship.x + Math.cos(angle) * 15,
+                    y: ship.y + Math.sin(angle) * 15,
+                    vx: Math.cos(angle) * 10,
+                    vy: Math.sin(angle) * 10,
+                    life: 45
+                });
             });
         }
 
-        function spawnMonster() {
-            if (!gameActive) return;
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 800;
-            monsters.push({ x: ship.x + Math.cos(angle) * dist, y: ship.y + Math.sin(angle) * dist, angle: angle + Math.PI, hp: CONFIG.monsterHealth });
-        }
-
         function initGame() {
-            Object.assign(ship, { x: 0, y: 0, vel: 0, angle: -Math.PI/2, hull: 100 });
+            ship = { x: 0, y: 0, angle: -Math.PI/2, vel: 0, targetAngle: -Math.PI/2, hull: 100 };
             keysCollected = 0; coinCount = 0;
             keyCountEl.innerText = "0/3"; coinCountEl.innerText = "0";
             hullBar.style.width = "100%";
-            monsters = []; cannonballs = []; keys = []; coins = []; barriers = [];
-            
-            // Spawn Barriers (Ghost Reefs)
+            monsters = []; cannonballs = []; keys = []; coins = [];
+
+            for (let i = 0; i < 3; i++) {
+                const a = Math.random() * Math.PI * 2;
+                const d = 800 + Math.random() * (CONFIG.worldRadius - 1200);
+                keys.push({ x: Math.cos(a) * d, y: Math.sin(a) * d });
+            }
+
             for (let i = 0; i < 20; i++) {
                 const a = Math.random() * Math.PI * 2;
                 const d = 400 + Math.random() * (CONFIG.worldRadius - 600);
-                let points = [];
-                const radius = 30 + Math.random() * 50;
-                for(let p=0; p<8; p++) {
-                    const ang = (p/8) * Math.PI * 2;
-                    points.push({x: Math.cos(ang) * radius * (0.7 + Math.random() * 0.6), y: Math.sin(ang) * radius * (0.7 + Math.random() * 0.6)});
-                }
-                barriers.push({ x: Math.cos(a) * d, y: Math.sin(a) * d, radius: radius, points: points });
-            }
-
-            // Spawn Items within world radius
-            for (let i = 0; i < 3; i++) {
-                const a = Math.random() * Math.PI * 2;
-                const d = 500 + Math.random() * (CONFIG.worldRadius - 1000);
-                keys.push({ x: Math.cos(a) * d, y: Math.sin(a) * d });
-            }
-            for (let i = 0; i < 15; i++) {
-                const a = Math.random() * Math.PI * 2;
-                const d = 300 + Math.random() * (CONFIG.worldRadius - 500);
                 coins.push({ x: Math.cos(a) * d, y: Math.sin(a) * d });
             }
 
             menuScreen.classList.add('opacity-0', 'pointer-events-none');
             uiHud.classList.remove('opacity-0');
             gameActive = true;
-            monsterInterval = setInterval(spawnMonster, 4000);
-            animationId = requestAnimationFrame(gameLoop);
+            if(monsterInterval) clearInterval(monsterInterval);
+            monsterInterval = setInterval(() => {
+                if(monsters.length < 6 && gameActive) {
+                    const a = Math.random() * Math.PI * 2;
+                    monsters.push({ x: ship.x + Math.cos(a) * 800, y: ship.y + Math.sin(a) * 800, hp: 2 });
+                }
+            }, 4000);
+            requestAnimationFrame(gameLoop);
         }
 
-        function updatePhysics() {
+        function updateCompass(items, element) {
+            if (items.length === 0) { element.style.display = "none"; return; }
+            element.style.display = "flex";
+            let closest = items[0];
+            let minDist = Math.hypot(items[0].x - ship.x, items[0].y - ship.y);
+            items.forEach(item => {
+                let d = Math.hypot(item.x - ship.x, item.y - ship.y);
+                if (d < minDist) { minDist = d; closest = item; }
+            });
+            const angle = Math.atan2(closest.y - ship.y, closest.x - ship.x);
+            element.style.transform = `rotate(${angle + Math.PI/2}rad)`;
+        }
+
+        function drawShip(ctx, s) {
+            ctx.save();
+            ctx.translate(s.x, s.y);
+            ctx.rotate(s.angle);
+            ctx.fillStyle = '#451a03';
+            ctx.beginPath();
+            ctx.moveTo(28, 0); 
+            ctx.quadraticCurveTo(10, -15, -20, -12);
+            ctx.lineTo(-20, 12);
+            ctx.quadraticCurveTo(10, 15, 28, 0);
+            ctx.fill();
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(-10, -8, 15, 16);
+            ctx.fillStyle = '#f8fafc';
+            const sailW = 4 + (s.vel * 2);
+            ctx.fillRect(- sailW/2, -12, sailW, 24);
+            ctx.restore();
+        }
+
+        function drawCoin(ctx, x, y) {
+            ctx.save();
+            const pulse = Math.sin(Date.now() / 200) * 2;
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(x, y, 8 + pulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawKey(ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(Math.sin(Date.now()/500) * 0.5);
+            ctx.fillStyle = '#22d3ee';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#22d3ee';
+            ctx.beginPath();
+            ctx.arc(0, -8, 6, 0, Math.PI*2);
+            ctx.fillRect(-2, -2, 4, 15);
+            ctx.fillRect(2, 6, 4, 2);
+            ctx.fillRect(2, 10, 4, 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function update() {
             if (input.active) {
                 let diff = ship.targetAngle - ship.angle;
                 while (diff <= -Math.PI) diff += Math.PI * 2;
                 while (diff > Math.PI) diff -= Math.PI * 2;
-                ship.angle += diff * (Math.min(ship.vel / 2, 1) * CONFIG.baseTurnSpeed);
+                ship.angle += diff * (Math.min(ship.vel / 1.5, 1) * CONFIG.baseTurnSpeed);
                 ship.vel = Math.min(ship.vel + CONFIG.acceleration, CONFIG.shipMaxSpeed);
             }
-            
             ship.vel *= CONFIG.friction;
-            let nextX = ship.x + Math.cos(ship.angle) * ship.vel;
-            let nextY = ship.y + Math.sin(ship.angle) * ship.vel;
+            ship.x += Math.cos(ship.angle) * ship.vel;
+            ship.y += Math.sin(ship.angle) * ship.vel;
 
-            // WORLD BORDER CHECK
-            const distFromCenter = Math.hypot(nextX, nextY);
-            if (distFromCenter > CONFIG.worldRadius) {
-                ship.vel *= 0.5; // Melambatkan kapal saat menabrak batas
-                const angleToCenter = Math.atan2(nextY, nextX);
-                nextX = Math.cos(angleToCenter) * CONFIG.worldRadius;
-                nextY = Math.sin(angleToCenter) * CONFIG.worldRadius;
-            }
+            camera.x += (ship.x - width / 2 - camera.x) * 0.08;
+            camera.y += (ship.y - height / 2 - camera.y) * 0.08;
 
-            // REEF COLLISION
-            let hitBarrier = false;
-            for (let b of barriers) {
-                if (Math.hypot(nextX - b.x, nextY - b.y) < b.radius + ship.radius) {
-                    hitBarrier = true; break;
+            updateCompass(coins, compassCoin);
+            updateCompass(keys, compassKey);
+
+            coins.forEach((c, i) => {
+                if (Math.hypot(c.x - ship.x, c.y - ship.y) < 40) {
+                    coins.splice(i, 1); coinCount++; coinCountEl.innerText = coinCount;
                 }
-            }
-
-            if (!hitBarrier) { ship.x = nextX; ship.y = nextY; } 
-            else { if (ship.vel > 1) ship.hull -= 5; ship.vel = 0; hullBar.style.width = `${Math.max(0, ship.hull)}%`; if (ship.hull <= 0) endGame(); }
-
-            camera.x += (ship.x - width / 2 - camera.x) * 0.1;
-            camera.y += (ship.y - height / 2 - camera.y) * 0.1;
+            });
+            keys.forEach((k, i) => {
+                if (Math.hypot(k.x - ship.x, k.y - ship.y) < 40) {
+                    keys.splice(i, 1); keysCollected++; 
+                    keyCountEl.innerText = `${keysCollected}/3`;
+                    if(keysCollected >= 3) triggerVictory();
+                }
+            });
 
             cannonballs.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy; b.life--;
-                barriers.forEach(bar => { if (Math.hypot(b.x - bar.x, b.y - bar.y) < bar.radius) b.life = 0; });
-                if (b.life <= 0) cannonballs.splice(i, 1);
-            });
-
-            monsters.forEach((m, mi) => {
-                const targetA = Math.atan2(ship.y - m.y, ship.x - m.x);
-                let d = targetA - m.angle;
-                while (d <= -Math.PI) d += Math.PI * 2;
-                while (d > Math.PI) d -= Math.PI * 2;
-                m.angle += d * 0.03;
-                m.x += Math.cos(m.angle) * 2; m.y += Math.sin(m.angle) * 2;
-
-                cannonballs.forEach((b, bi) => {
-                    if (Math.hypot(m.x - b.x, m.y - b.y) < 30) {
-                        m.hp--; cannonballs.splice(bi, 1);
-                        if (m.hp <= 0) monsters.splice(mi, 1);
+                monsters.forEach((m, mi) => {
+                    if (Math.hypot(b.x - m.x, b.y - m.y) < 35) {
+                        m.hp--; b.life = 0;
+                        if(m.hp <= 0) monsters.splice(mi, 1);
                     }
                 });
-
-                if (Math.hypot(m.x - ship.x, m.y - ship.y) < 40) {
-                    ship.hull -= 0.5; hullBar.style.width = `${ship.hull}%`;
-                    if (ship.hull <= 0) endGame();
-                }
+                if(b.life <= 0) cannonballs.splice(i, 1);
             });
 
-            for (let i = coins.length - 1; i >= 0; i--) {
-                if (Math.hypot(coins[i].x - ship.x, coins[i].y - ship.y) < 40) {
-                    coins.splice(i, 1); coinCount++; coinCountEl.innerText = coinCount;
+            monsters.forEach(m => {
+                const ang = Math.atan2(ship.y - m.y, ship.x - m.x);
+                m.x += Math.cos(ang) * 1.8; m.y += Math.sin(ang) * 1.8;
+                if(Math.hypot(ship.x - m.x, ship.y - m.y) < 45) {
+                    ship.hull -= 0.25;
+                    hullBar.style.width = `${ship.hull}%`;
+                    hullPercent.innerText = `${Math.ceil(ship.hull)}%`;
+                    if(ship.hull <= 0) triggerGameOver();
                 }
-            }
-            for (let i = keys.length - 1; i >= 0; i--) {
-                if (Math.hypot(keys[i].x - ship.x, keys[i].y - ship.y) < 50) {
-                    keys.splice(i, 1); keysCollected++; keyCountEl.innerText = `${keysCollected}/3`;
-                }
-            }
+            });
         }
 
         function draw() {
             ctx.fillStyle = CONFIG.waterColor;
             ctx.fillRect(0, 0, width, height);
+            
             ctx.save();
             ctx.translate(-camera.x, -camera.y);
 
-            // DRAW WORLD BORDER (THE FOG)
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 15;
-            ctx.setLineDash([20, 20]);
-            ctx.beginPath();
-            ctx.arc(0, 0, CONFIG.worldRadius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            ctx.strokeStyle = '#ffffff05';
+            ctx.lineWidth = 1;
+            for(let x = -CONFIG.worldRadius; x < CONFIG.worldRadius; x+=200) {
+                ctx.beginPath(); ctx.moveTo(x, -CONFIG.worldRadius); ctx.lineTo(x, CONFIG.worldRadius); ctx.stroke();
+            }
 
-            // DRAW REEFS
-            barriers.forEach(b => {
-                ctx.fillStyle = '#0f172a'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
-                ctx.beginPath();
-                b.points.forEach((p, i) => { if(i===0) ctx.moveTo(b.x + p.x, b.y + p.y); else ctx.lineTo(b.x + p.x, b.y + p.y); });
-                ctx.closePath(); ctx.fill(); ctx.stroke();
-            });
+            ctx.strokeStyle = '#ef444433';
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(0, 0, CONFIG.worldRadius, 0, Math.PI*2); ctx.stroke();
 
-            // DRAW SHIP
-            ctx.save(); ctx.translate(ship.x, ship.y); ctx.rotate(ship.angle);
-            ctx.fillStyle = '#3e2723'; ctx.beginPath();
-            ctx.moveTo(35, 0); ctx.lineTo(-25, -15); ctx.lineTo(-30, 0); ctx.lineTo(-25, 15);
-            ctx.closePath(); ctx.fill();
-            ctx.fillStyle = '#f8fafc'; ctx.fillRect(-10, - (5 + ship.vel * 2) - 10, 5, (5 + ship.vel * 2) * 2 + 20);
-            ctx.restore();
-
-            cannonballs.forEach(b => { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill(); });
-            coins.forEach(c => { ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(c.x, c.y, 6, 0, Math.PI*2); ctx.fill(); });
-            keys.forEach(k => { ctx.fillStyle = '#22d3ee'; ctx.beginPath(); ctx.arc(k.x, k.y, 8, 0, Math.PI*2); ctx.fill(); });
+            coins.forEach(c => drawCoin(ctx, c.x, c.y));
+            keys.forEach(k => drawKey(ctx, k.x, k.y));
+            
             monsters.forEach(m => {
-                ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.angle);
-                ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.ellipse(0, 0, 25, 10, 0, 0, Math.PI*2); ctx.fill();
-                ctx.restore();
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath(); ctx.arc(m.x, m.y, 22, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#dc2626';
+                ctx.beginPath(); ctx.arc(m.x + Math.cos(Date.now()/100)*3, m.y + Math.sin(Date.now()/100)*3, 6, 0, Math.PI*2); ctx.fill();
             });
+
+            drawShip(ctx, ship);
+
+            ctx.fillStyle = '#fbbf24';
+            cannonballs.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI*2); ctx.fill(); });
+
             ctx.restore();
         }
 
-        function endGame() {
-            gameActive = false; clearInterval(monsterInterval);
+        function triggerVictory() {
+            gameActive = false;
+            menuTitle.innerText = "TREASURE CLAIMED";
+            menuTitle.className = "font-pirate text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-cyan-200 to-blue-600 mb-4";
+            btnText.innerText = "CONTINUE JOURNEY";
+            startBtn.onclick = () => window.location.reload();
             menuScreen.classList.remove('opacity-0', 'pointer-events-none');
-            startBtn.querySelector('span').innerText = "TRY AGAIN";
         }
 
-        function gameLoop() { if (gameActive) { updatePhysics(); draw(); requestAnimationFrame(gameLoop); } }
-        startBtn.addEventListener('click', initGame);
+        function triggerGameOver() {
+            gameActive = false;
+            menuTitle.innerText = "SUNK TO THE DEPTHS";
+            btnText.innerText = "RESPAWN";
+            startBtn.onclick = initGame;
+            menuScreen.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function gameLoop() {
+            if (gameActive) {
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        startBtn.onclick = initGame;
