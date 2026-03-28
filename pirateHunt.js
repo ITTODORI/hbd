@@ -5,8 +5,13 @@ const CONFIG = {
             baseTurnSpeed: 0.05,
             waterColor: '#000f38',
             cannonCooldown: 1000,
-            worldRadius: 2500
+            worldRadius: 2500,
+            noticeTime: 6000 
         };
+
+        // LOAD SHUTTLE IMAGE
+        const shuttleImg = new Image();
+        shuttleImg.src = 'https://cdn-icons-png.flaticon.com/512/3768/3768291.png';
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -22,17 +27,33 @@ const CONFIG = {
         const coinCountEl = document.getElementById('coin-count');
         const compassCoin = document.getElementById('compass-arrow-coin');
         const compassKey = document.getElementById('compass-arrow-key');
+        const midNotice = document.getElementById('mid-notice');
 
         let width, height, gameActive = false, monsterInterval;
         let keysCollected = 0, coinCount = 0, lastFire = 0;
+        let gameStartTime = 0, noticeTriggered = false;
         
+        let stars = [];
         let ship = { x: 0, y: 0, angle: -Math.PI / 2, vel: 0, targetAngle: -Math.PI / 2, hull: 100 };
         let camera = { x: 0, y: 0 }, input = { active: false };
         let monsters = [], cannonballs = [], keys = [], coins = [];
 
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 250; i++) {
+                stars.push({
+                    x: Math.random(),
+                    y: Math.random(),
+                    size: Math.random() * 2 + 0.5,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
+            initStars();
         }
         window.addEventListener('resize', resize);
         resize();
@@ -87,11 +108,16 @@ const CONFIG = {
         }
 
         function initGame() {
+            initStars();
             ship = { x: 0, y: 0, angle: -Math.PI/2, vel: 0, targetAngle: -Math.PI/2, hull: 100 };
             keysCollected = 0; coinCount = 0;
             keyCountEl.innerText = "0/3"; coinCountEl.innerText = "0";
             hullBar.style.width = "100%";
             monsters = []; cannonballs = []; keys = []; coins = [];
+            
+            gameStartTime = Date.now();
+            noticeTriggered = false;
+            midNotice.classList.replace('notice-visible', 'notice-hidden');
 
             for (let i = 0; i < 3; i++) {
                 const a = Math.random() * Math.PI * 2;
@@ -118,6 +144,14 @@ const CONFIG = {
             requestAnimationFrame(gameLoop);
         }
 
+        function triggerNotice() {
+            noticeTriggered = true;
+            midNotice.classList.replace('notice-hidden', 'notice-visible');
+            setTimeout(() => {
+                midNotice.classList.replace('notice-visible', 'notice-hidden');
+            }, 5000); 
+        }
+
         function updateCompass(items, element) {
             if (items.length === 0) { element.style.display = "none"; return; }
             element.style.display = "flex";
@@ -134,9 +168,11 @@ const CONFIG = {
         function drawShip(ctx, s) {
             ctx.save();
             ctx.translate(s.x, s.y);
-            ctx.rotate(s.angle);
+            
+            // offset 90 derajat (Math.PI/2).
+            ctx.rotate(s.angle + Math.PI / 2);
 
-            // LOGIC (KEY TRACKER)
+            // KEY INDICATOR (Arrow pointing to closest key)
             if (keys.length > 0) {
                 let closestKey = keys[0];
                 let minDist = Math.hypot(keys[0].x - s.x, keys[0].y - s.y);
@@ -144,15 +180,11 @@ const CONFIG = {
                     let d = Math.hypot(k.x - s.x, k.y - s.y);
                     if (d < minDist) { minDist = d; closestKey = k; }
                 });
-
                 const angleToKey = Math.atan2(closestKey.y - s.y, closestKey.x - s.x);
-                
                 ctx.save();
-                ctx.rotate(-s.angle); // Reset ratio ship
+                ctx.rotate(-(s.angle + Math.PI / 2)); 
                 ctx.rotate(angleToKey);
-                
-                // Arriw Navigation
-                ctx.translate(60, 0); 
+                ctx.translate(65, 0); 
                 ctx.fillStyle = '#22d3ee';
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = '#22d3ee';
@@ -165,23 +197,14 @@ const CONFIG = {
                 ctx.restore();
             }
 
-            // Badan Kapal
-            ctx.fillStyle = '#451a03';
-            ctx.beginPath();
-            ctx.moveTo(28, 0); 
-            ctx.quadraticCurveTo(10, -15, -20, -12);
-            ctx.lineTo(-20, 12);
-            ctx.quadraticCurveTo(10, 15, 28, 0);
-            ctx.fill();
-
-            // Dek Kapal
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(-10, -8, 15, 16);
-
-            // Layar Kapal
-            ctx.fillStyle = '#f8fafc';
-            const sailW = 4 + (s.vel * 2);
-            ctx.fillRect(- sailW/2, -12, sailW, 24);
+            // DRAW THE SPACE SHUTTLE ICON
+            const shuttleSize = 60;
+            if (shuttleImg.complete) {
+                ctx.drawImage(shuttleImg, -shuttleSize/2, -shuttleSize/2, shuttleSize, shuttleSize);
+            } else {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(-10, -20, 20, 40);
+            }
             
             ctx.restore();
         }
@@ -216,6 +239,10 @@ const CONFIG = {
         }
 
         function update() {
+            if (!noticeTriggered && Date.now() - gameStartTime > CONFIG.noticeTime) {
+                triggerNotice();
+            }
+
             if (input.active) {
                 let diff = ship.targetAngle - ship.angle;
                 while (diff <= -Math.PI) diff += Math.PI * 2;
@@ -270,8 +297,34 @@ const CONFIG = {
         }
 
         function draw() {
-            ctx.fillStyle = CONFIG.waterColor;
+            // Galaxy Background
+            const grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height));
+            grad.addColorStop(0, '#0c1233');
+            grad.addColorStop(0.6, '#020617');
+            grad.addColorStop(1, '#000000');
+            ctx.fillStyle = grad;
             ctx.fillRect(0, 0, width, height);
+
+            // Subtle Nebula Clouds
+            const nebulaGrad = ctx.createRadialGradient(width * 0.7, height * 0.3, 0, width * 0.7, height * 0.3, width * 0.6);
+            nebulaGrad.addColorStop(0, 'rgba(46, 16, 101, 0.15)');
+            nebulaGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = nebulaGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Stars with Parallax Twinkle
+            ctx.fillStyle = "white";
+            stars.forEach(s => {
+                let x = (s.x * width - camera.x * 0.05) % width;
+                let y = (s.y * height - camera.y * 0.05) % height;
+                if (x < 0) x += width;
+                if (y < 0) y += height;
+                
+                const alpha = 0.2 + Math.abs(Math.sin(Date.now()/2000 + s.twinkle)) * 0.6;
+                ctx.globalAlpha = alpha;
+                ctx.fillRect(x, y, s.size, s.size);
+            });
+            ctx.globalAlpha = 1;
             
             ctx.save();
             ctx.translate(-camera.x, -camera.y);
@@ -290,10 +343,42 @@ const CONFIG = {
             keys.forEach(k => drawKey(ctx, k.x, k.y));
             
             monsters.forEach(m => {
-                ctx.fillStyle = '#0f172a';
-                ctx.beginPath(); ctx.arc(m.x, m.y, 22, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#dc2626';
-                ctx.beginPath(); ctx.arc(m.x + Math.cos(Date.now()/100)*3, m.y + Math.sin(Date.now()/100)*3, 6, 0, Math.PI*2); ctx.fill();
+                ctx.save();
+                ctx.translate(m.x, m.y);
+                
+                const time = Date.now() * 0.002;
+                const pulse = Math.sin(Date.now() / 200) * 8;
+                
+                // Ominous Crimson Glow
+                ctx.shadowBlur = 15 + pulse;
+                ctx.shadowColor = '#ef4444';
+                
+                // Sentinel Body (Diamond Shard)
+                ctx.rotate(Math.sin(time * 0.5) * 0.3);
+                ctx.fillStyle = '#1e1b4b'; // Deep void blue
+                ctx.beginPath();
+                ctx.moveTo(0, -30);
+                ctx.lineTo(20, 0);
+                ctx.lineTo(0, 30);
+                ctx.lineTo(-20, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Pulsing Red Core
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(0, 0, 7 + Math.sin(time * 3) * 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Orbiting Void Fragments
+                ctx.rotate(time);
+                for(let i=0; i<3; i++) {
+                    ctx.rotate(Math.PI * 2 / 3);
+                    ctx.fillStyle = '#ef4444aa';
+                    ctx.fillRect(35 + Math.sin(time + i)*5, -2, 5, 5);
+                }
+                
+                ctx.restore();
             });
 
             drawShip(ctx, ship);
@@ -307,7 +392,7 @@ const CONFIG = {
         function triggerVictory() {
             gameActive = false;
             menuTitle.innerText = "TREASURE CLAIMED";
-            menuTitle.className = "font-pirate text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-cyan-200 to-blue-600 mb-4";
+            menuTitle.className = "font-pirate text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-400 to-amber-900 mb-4";
             btnText.innerText = "CONTINUE JOURNEY";
             startBtn.onclick = () => window.location.href = 'miniGM.html';
             menuScreen.classList.remove('opacity-0', 'pointer-events-none');
@@ -315,7 +400,7 @@ const CONFIG = {
 
         function triggerGameOver() {
             gameActive = false;
-            menuTitle.innerText = "SUNK TO THE DEPTHS";
+            menuTitle.innerText = "DEFEATED";
             btnText.innerText = "RESPAWN";
             startBtn.onclick = initGame;
             menuScreen.classList.remove('opacity-0', 'pointer-events-none');

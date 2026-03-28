@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blackwater: Pirate Hunt</title>
+    <title>Blackwater: Space Hunt</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    
     <style>
         body { margin: 0; overflow: hidden; background-color: #020617; touch-action: none; }
-        .font-pirate { font-family: 'Cinzel', serif; }
+        
+        .font-pirate { 
+            font-family: 'DM Serif Display', serif; 
+        }
+
         canvas { display: block; }
         .vignette {
             position: absolute;
@@ -21,6 +27,10 @@
         .ui-layer { z-index: 30; }
         #reload-indicator.active { animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        /* Cinematic Notice Animation */
+        .notice-hidden { opacity: 0; transform: translate(-50%, -20px); }
+        .notice-visible { opacity: 1; transform: translate(-50%, 0); }
     </style>
 </head>
 <body>
@@ -28,6 +38,7 @@
     <canvas id="gameCanvas"></canvas>
     <div class="vignette"></div>
 
+    <!-- UI LAYER -->
     <div class="absolute inset-0 ui-layer pointer-events-none flex flex-col justify-between p-6">
         <div id="hud" class="flex justify-between items-start opacity-0 transition-opacity duration-1000">
             <div class="space-y-4">
@@ -36,12 +47,12 @@
                     <div class="flex items-center gap-6">
                         <div class="flex items-center gap-3">
                             <iconify-icon icon="ion:stopwatch-outline" class="text-amber-400 text-2xl"></iconify-icon>
-                            <span id="coin-count" class="text-white text-2xl font-bold font-pirate">0</span>
+                            <span id="coin-count" class="text-white text-3xl font-pirate">0</span>
                         </div>
                         <div class="h-8 w-px bg-white/10"></div>
                         <div class="flex items-center gap-3">
                             <iconify-icon icon="game-icons:skeleton-key" class="text-cyan-400 text-2xl"></iconify-icon>
-                            <span id="key-count" class="text-white text-2xl font-bold font-pirate">0/3</span>
+                            <span id="key-count" class="text-white text-3xl font-pirate">0/3</span>
                         </div>
                     </div>
                 </div>
@@ -60,10 +71,10 @@
                 <div class="bg-black/80 backdrop-blur-xl p-1 rounded-full border-2 border-amber-900/50 w-24 h-24 flex items-center justify-center relative shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                     <div class="absolute inset-2 border border-white/5 rounded-full"></div>
                     <div id="compass-arrow-coin" class="w-full h-full flex justify-center items-start pt-2 transition-transform duration-150 absolute inset-0">
-                        <div class="w-1.5 h-8 bg-amber-500 rounded-full shadow-[0_0_10px_#f59e0b]"></div>
+                        <div class="w-1.5 h-8 bg-amber-500 rounded-full shadow-[0_0:10px_#f59e0b]"></div>
                     </div>
                     <div id="compass-arrow-key" class="w-full h-full flex justify-center items-start pt-2 transition-transform duration-150 absolute inset-0">
-                        <div class="w-1.5 h-10 bg-cyan-400 rounded-full shadow-[0_0_10px_#22d3ee]"></div>
+                        <div class="w-1.5 h-10 bg-cyan-400 rounded-full shadow-[0_0:10px_#22d3ee]"></div>
                     </div>
                     <div class="w-3 h-3 bg-white rounded-full z-10 border-2 border-black"></div>
                 </div>
@@ -72,18 +83,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- Notice -->
+        <div id="mid-notice" class="absolute top-[200px] left-1/2 -translate-x-1/2 notice-hidden pointer-events-none transition-all duration-1000 z-50 w-full max-w-lg text-center">
+            <div class="flex flex-col items-center">
+                <div class="w-32 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent mb-4"></div>
+                <p class="font-pirate tracking-[0.6em] text-[10px] uppercase text-amber-500/80 mb-1">
+                    Mission Objective
+                </p>
+                <p class="font-pirate tracking-[0.25em] text-sm md:text-base uppercase text-white drop-shadow-2xl">
+                    Collect <span class="text-amber-400">3 Keys</span> to finish
+                </p>
+                <div class="w-32 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent mt-4"></div>
+            </div>
+        </div>
     </div>
 
+    <!-- MENU SCREEN -->
     <div id="menu-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md transition-all duration-700">
         <div class="text-center px-4">
-            <div class="mb-6 opacity-80">
-                <iconify-icon icon="game-icons:galleon" class="text-amber-600 text-8xl"></iconify-icon>
+            <div class="mb-10 flex justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/3768/3768291.png" class="w-28 h-28 object-contain drop-shadow-[0_0_25px_rgba(245,158,11,0.4)] sepia-[0.8] brightness-[0.9] saturate-[1.2]" alt="Rocket Logo">
             </div>
-            <h1 id="menu-title" class="font-pirate text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-500 to-amber-900 mb-4 tracking-tighter">BLACKWATER</h1>
-            <p id="menu-desc" class="text-amber-500/40 font-pirate tracking-[0.4em] mb-12 text-xs md:text-sm italic">The tides of fate await no man</p>
-            <button id="start-btn" class="group relative px-16 py-5 bg-transparent border border-amber-500/20 overflow-hidden transition-all hover:border-amber-500">
-                <div class="absolute inset-0 bg-amber-500/5 translate-y-full group-hover:translate-y-0 transition-transform"></div>
-                <span id="btn-text" class="relative text-amber-500 font-pirate text-2xl tracking-[0.2em] group-hover:text-white transition-colors">LET'S PLAY</span>
+            <h1 id="menu-title" class="font-pirate text-7xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-400 to-amber-900 mb-4 tracking-tight">STARBOUND</h1>
+            <p id="menu-desc" class="text-amber-500 font-pirate tracking-[0.3em] mb-12 text-xs md:text-sm italic uppercase drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]">Find the keys to escape the void</p>
+            <button id="start-btn" class="group relative px-16 py-5 bg-amber-900/20 border border-amber-600/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] overflow-hidden transition-all duration-500 hover:border-amber-500 hover:shadow-[0_0_40px_rgba(245,158,11,0.5)] active:scale-95">
+                <div class="absolute inset-0 bg-amber-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                <span id="btn-text" class="relative text-white font-pirate text-2xl tracking-[0.2em] drop-shadow-[0_0_10px_rgba(245,158,11,0.8)] group-hover:text-amber-400 transition-colors">LET'S PLAY</span>
             </button>
         </div>
     </div>
