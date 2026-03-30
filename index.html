@@ -36,12 +36,12 @@
             Top-up Games
         </a>
 
-        <button id="thr-btn" class="w-full bg-green-600/80 hover:bg-green-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
+        <button id="2-btn" class="w-full bg-green-600/80 hover:bg-green-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
             THR
         </button>
 
-        <button id="ikappim-btn" class="w-full bg-orange-600/80 hover:bg-orange-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
-            IKAPPIM
+        <button id="3-btn" class="w-full bg-orange-600/80 hover:bg-orange-600 py-3 mb-4 rounded-xl font-semibold shadow-lg transition-all active:scale-95">
+            Contact Me
         </button>
 
         <div id="notification" class="mt-4 h-5 text-sm"></div>
@@ -80,11 +80,11 @@
         const gate = document.getElementById('password-gate');
         const content = document.getElementById('birthday-content');
         const audio = document.getElementById('thr-audio');
-        const thrBtn = document.getElementById('thr-btn');
-        const ikappimBtn = document.getElementById('ikappim-btn');
+        const secondBtn = document.getElementById('2-btn');
+        const threeBtn = document.getElementById('3-btn');
 
         // Logic for THR Button
-        thrBtn.addEventListener('click', function() {
+        secondBtn.addEventListener('click', function() {
             // Hide Gate
             gate.style.display = 'none';
             
@@ -109,9 +109,9 @@
             }
         });
 
-        // IKAPPIM Button
-        ikappimBtn.addEventListener('click', function() {
-            window.location.href = 'pirateHUNT.html';
+        // 3 Button
+        threeeBtn.addEventListener('click', function() {
+            window.location.href = 'https://wa.me/message/UDUGT2D3HRMDL1'; //pirateHUNT.html
         });
     </script>
 </body>
